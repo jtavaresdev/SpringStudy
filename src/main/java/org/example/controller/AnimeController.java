@@ -53,7 +53,7 @@ public class AnimeController {
     @GetMapping(path = "/find")
     public ResponseEntity<List<Anime>> findByName(@RequestParam(required = true) String name) {
         log.info(dateUtil.formatLocalDateTimeToDataBaseStyle(LocalDateTime.now()));
-        return animeService.findByName(name);
+        return ResponseEntity.status(HttpStatus.OK).body(animeService.findByName(name));
 
     }
 
@@ -64,8 +64,9 @@ public class AnimeController {
     }
 
     @PutMapping("/")
-    public ResponseEntity<Anime> update(@RequestBody AnimePutRequestBody animePutRequestBody) {
-        return animeService.replace(animePutRequestBody);
+    public ResponseEntity<Object> update(@RequestBody AnimePutRequestBody animePutRequestBody) {
+        animeService.replace(animePutRequestBody);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Updated");
     }
 
     @DeleteMapping(path = "/{id}")

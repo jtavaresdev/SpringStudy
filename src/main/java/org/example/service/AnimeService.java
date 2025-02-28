@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.server.ResponseStatusException;
 
+import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,12 +33,12 @@ public class AnimeService {
     public Page<Anime> listAll(Pageable pageable) {
         return animeRepository.findAll(pageable);
     }
-    public ResponseEntity<List<Anime>> findByName(String name) {
+    public List<Anime> findByName(String name) {
         List<Anime> byName = animeRepository.findByName(name);
         if (byName.isEmpty()){
             throw new BadRequestException("Erro trying find anime by name");
         }
-        return ResponseEntity.status(HttpStatus.OK).body(byName);
+        return byName;
     }
 
     public Anime findByIdOrElseThrow(Long id) {
@@ -57,11 +58,11 @@ public class AnimeService {
         animeRepository.delete(byIdOrElseThrow);
     }
 
-    public ResponseEntity<Anime> replace(AnimePutRequestBody animePutRequestBody) {
+    public void replace(AnimePutRequestBody animePutRequestBody) {
         Anime byIdOrElseThrow = findByIdOrElseThrow(animePutRequestBody.getId());
         Anime anime = AnimeMapper.INSTACE.toAnime(animePutRequestBody);
         anime.setId(byIdOrElseThrow.getId());
-        return ResponseEntity.status(HttpStatus.OK).body(animeRepository.save(anime));
+        animeRepository.save(anime);
     }
 
     public List<Anime> listAllNoPageable() {
