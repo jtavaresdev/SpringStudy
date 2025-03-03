@@ -35,9 +35,6 @@ public class AnimeService {
     }
     public List<Anime> findByName(String name) {
         List<Anime> byName = animeRepository.findByName(name);
-        if (byName.isEmpty()){
-            throw new BadRequestException("Erro trying find anime by name");
-        }
         return byName;
     }
 
