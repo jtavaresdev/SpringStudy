@@ -5,6 +5,7 @@ import org.assertj.core.api.Assertions;
 import org.example.domain.Anime;
 import org.example.exception.BadRequestException;
 import org.example.repository.AnimeRepository;
+import org.example.repository.DevTavaresUserRepository;
 import org.example.requests.AnimePostRequestBody;
 import org.example.util.AnimeCreator;
 import org.example.util.AnimePostRequestBodyCreator;
@@ -14,10 +15,16 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.BDDMockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.boot.web.server.LocalServerPort;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -27,6 +34,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 
@@ -38,15 +46,34 @@ import java.util.List;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 class AnimeControllerIT {
     @Autowired
+    @Qualifier(value = "testRestTemplateRoleUserCreator")
     private TestRestTemplate testRestTemplate;
-    @LocalServerPort
-    private int port;
+
     @Autowired
     private AnimeRepository animeRepository;
 
+    @Autowired
+    private DevTavaresUserRepository devTavaresUserRepository;
+
+
+    @TestConfiguration
+    static class Config {
+
+        @Bean(name = "testRestTemplateRoleUserCreator" )
+        @Lazy
+        public TestRestTemplate testRestTemplateRoleUserCreator(@Value("${local.server.port}") int port) {
+            RestTemplateBuilder restTemplateBuilder = new RestTemplateBuilder()
+                    .rootUri("http://localhost:"+ port)
+                    .basicAuthentication("joaotavares", "test");
+
+            return new TestRestTemplate(restTemplateBuilder);
+        }
+
+    }
+
     @Test
     @DisplayName("list returns list of anime inside page object when successful")
-    void list_ReturnsListOfAnimesInsidePageObject_WhenSuccessful(){
+    void list_ReturnsListOfAnimesInsidePageObject_WhenSuccessful() {
         Anime savedAnime = animeRepository.save(AnimeCreator.createAnimeToBeSaved());
 
         String expectedName = savedAnime.getName();
@@ -86,13 +113,13 @@ class AnimeControllerIT {
     }
 
 
-//
+    //
     @Test
     @DisplayName("Find by id returns  anime when successful")
     void findByIdOrElseThrow_ReturnAnime_WhenSuccessful() {
         Anime savedAnime = animeRepository.save(AnimeCreator.createAnimeToBeSaved());
         Long animeExpected = savedAnime.getId();
-        Anime anime = testRestTemplate.getForObject("/animes/{id}",Anime.class,animeExpected);
+        Anime anime = testRestTemplate.getForObject("/animes/{id}", Anime.class, animeExpected);
 
         Assertions.assertThat(anime).isNotNull();
         Assertions.assertThat(anime.getId()).isNotNull().isEqualTo(animeExpected);
@@ -104,20 +131,23 @@ class AnimeControllerIT {
         Anime savedAnime = animeRepository.save(AnimeCreator.createAnimeToBeSaved());
 
         String animeExpected = savedAnime.getName();
-        String url = String.format("/animes/find?name=%s",animeExpected);
+        String url = String.format("/animes/find?name=%s", animeExpected);
 
-        List<Anime> byName = testRestTemplate.exchange(url,HttpMethod.GET,null,
-                new ParameterizedTypeReference<List<Anime>>(){}).getBody();
+        List<Anime> byName = testRestTemplate.exchange(url, HttpMethod.GET, null,
+                new ParameterizedTypeReference<List<Anime>>() {
+                }).getBody();
 
         Assertions.assertThat(byName).isNotNull();
         Assertions.assertThat(byName.get(0).getName()).isNotEmpty().isEqualTo(animeExpected);
     }
+
     @Test
     @DisplayName("Find by name returns list empty of anime when not found anime")
     void findByName_ReturnListEmptyOfAnime_WhenNotSuccessful() {
 
-        List<Anime> byName = testRestTemplate.exchange("/animes/find?name=dbz",HttpMethod.GET,null,
-                new ParameterizedTypeReference<List<Anime>>(){}).getBody();
+        List<Anime> byName = testRestTemplate.exchange("/animes/find?name=dbz", HttpMethod.GET, null,
+                new ParameterizedTypeReference<List<Anime>>() {
+                }).getBody();
 
         Assertions.assertThat(byName).isEmpty();
     }
@@ -131,7 +161,7 @@ class AnimeControllerIT {
                 new ParameterizedTypeReference<Anime>() {
                 }, id).getBody();
 
-        Assertions.assertThat(anime).isNull();
+        Assertions.assertThat(anime.getId()).isNull();
     }
 
     @Test

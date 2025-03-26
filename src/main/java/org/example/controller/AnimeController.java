@@ -12,6 +12,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -50,6 +53,15 @@ public class AnimeController {
         return new ResponseEntity<>(animeService.findByIdOrElseThrow(id), HttpStatus.OK);
     }
 
+    @GetMapping(path = "by-id/{id}")
+    public ResponseEntity<Anime> findByIdAuthenticationPrincipal(@PathVariable long id,
+                                                                  @AuthenticationPrincipal UserDetails userDetails) {
+        log.info(dateUtil.formatLocalDateTimeToDataBaseStyle(LocalDateTime.now()));
+        log.info(userDetails);
+        return new ResponseEntity<>(animeService.findByIdOrElseThrow(id), HttpStatus.OK);
+    }
+
+
     @GetMapping(path = "/find")
     public ResponseEntity<List<Anime>> findByName(@RequestParam(required = true) String name) {
         log.info(dateUtil.formatLocalDateTimeToDataBaseStyle(LocalDateTime.now()));
@@ -58,6 +70,7 @@ public class AnimeController {
     }
 
     @PostMapping("/")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Anime> save(@RequestBody @Valid AnimePostRequestBody animePostRequestBody) {
         log.info(dateUtil.formatLocalDateTimeToDataBaseStyle(LocalDateTime.now()));
         return ResponseEntity.status(HttpStatus.CREATED).body(animeService.save(animePostRequestBody));
@@ -69,7 +82,7 @@ public class AnimeController {
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Updated");
     }
 
-    @DeleteMapping(path = "/{id}")
+    @DeleteMapping(path = "/admin/{id}")
     public ResponseEntity<Anime> deleteById(@PathVariable Long id) {
         log.info(dateUtil.formatLocalDateTimeToDataBaseStyle(LocalDateTime.now()));
         animeService.delete(id);
