@@ -1,6 +1,9 @@
 package org.example.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.example.domain.Anime;
@@ -38,6 +41,8 @@ public class AnimeController {
 
 
     @GetMapping("/")
+    @Operation(summary = "List All animes paginated", description = "The dafault size is 20",
+    tags = {"anime"})
     public ResponseEntity<Page<Anime>> list(@ParameterObject Pageable pageable) {
         log.info(dateUtil.formatLocalDateTimeToDataBaseStyle(LocalDateTime.now()));
         return ResponseEntity.ok(animeService.listAll(pageable));
@@ -85,6 +90,10 @@ public class AnimeController {
     }
 
     @DeleteMapping(path = "/admin/{id}")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Succesfull Operation"),
+            @ApiResponse(responseCode = "400", description = "When Anime Does not exist in the Database")
+    })
     public ResponseEntity<Anime> deleteById(@PathVariable Long id) {
         log.info(dateUtil.formatLocalDateTimeToDataBaseStyle(LocalDateTime.now()));
         animeService.delete(id);

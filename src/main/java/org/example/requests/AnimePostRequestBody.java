@@ -1,5 +1,6 @@
 package org.example.requests;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Data;
 
@@ -16,6 +17,7 @@ public class AnimePostRequestBody {
         this.name = name;
     }
 
+    @Schema(description = "This is the Anime name", example = "Re:Zero")
     private @NotBlank String name;
 
 
