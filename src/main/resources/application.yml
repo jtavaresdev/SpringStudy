@@ -11,3 +11,12 @@ spring:
     hibernate:
       ddl-auto: update
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+info:
+  app: Spring Boot 2 Essentials
+  github: https://github.com/jtavaresdev/SpringStudy
+
